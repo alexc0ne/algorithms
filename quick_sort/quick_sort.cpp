@@ -20,6 +20,7 @@ size_t get_random_in_range(size_t begin, size_t end)
 
 
 
+// in-place
 void quick_sort(std::vector<int> & a)
 {
     if (a.empty()) return;
