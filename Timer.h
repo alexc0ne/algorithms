@@ -24,7 +24,7 @@ public:
     {
         finish = std::chrono::steady_clock::now();
         std::cout << std::endl;
-        std::cout << "\e[1m" << "Duration( " << msg << " ): " << "\e[0m"
+        std::cout << "Duration( " << msg << " ): "
                   << std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count()
                   << " ms"
                   << std::endl;
