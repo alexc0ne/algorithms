@@ -66,12 +66,7 @@ std::pair<int, int> partition3(size_t begin,
 }
 
 
-
-// to avoid recursion one can put a pair of pointers (begin, end)
-// to the stack and while stack is not empty, pop a pair from
-// there, partition and put again onto stack
-
-
+// with recursion
 void sort(size_t begin, size_t end, std::vector<int> & a)
 {
     if (end - begin <= 1) return;
@@ -83,5 +78,33 @@ void sort(size_t begin, size_t end, std::vector<int> & a)
     sort(begin, begin_eq_gr.first, a);
     sort(begin_eq_gr.second, end, a);
 }
+
+
+// to avoid recursion one can put a pair of pointers (begin, end)
+// to the stack and while stack is not empty, pop a pair from
+// there, partition and put again onto stack
+
+// without recursion
+/*
+void sort(size_t begin, size_t end, std::vector<int> & a)
+{
+    std::stack<std::pair<int, int>> pending;
+    pending.emplace(begin, end);
+
+    std::pair<int, int> curr;
+    std::pair<int, int> part;
+    while (!pending.empty())
+    {
+        curr = pending.top();
+        pending.pop();
+
+        if (curr.second - curr.first <= 1) continue;
+
+        part = partition3(curr.first, curr.second, a);
+        pending.emplace(curr.first, part.first);
+        pending.emplace(part.second, curr.second);
+    }
+}
+*/
 
 
