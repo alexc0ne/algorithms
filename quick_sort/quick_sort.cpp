@@ -67,6 +67,11 @@ std::pair<int, int> partition3(size_t begin,
 
 
 
+// to avoid recursion one can put a pair of pointers (begin, end)
+// to the stack and while stack is not empty, pop a pair from
+// there, partition and put again onto stack
+
+
 void sort(size_t begin, size_t end, std::vector<int> & a)
 {
     if (end - begin <= 1) return;
