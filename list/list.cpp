@@ -1,3 +1,11 @@
+/*
+ *   no templates!
+ *   no exceptions!
+ *   no additional checks!
+*/
+
+
+
 #include "list.h"
 
 
