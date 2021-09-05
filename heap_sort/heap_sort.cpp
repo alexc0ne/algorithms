@@ -1,4 +1,4 @@
-#include "binary_heap.h"
+#include "heap_sort.h"
 #include "Output.h"
 #include <vector>
 
@@ -31,16 +31,24 @@ void siftDown(std::vector<int> & v, int i, int heapSize)
 
 
 
+void make_heap(std::vector<int> & v)
+{
+    int end = v.size();
+    for (int i = end - 1; i >= 0; --i)
+        siftDown(v, i, end);
+}
+
+
+
 void heap_sort(std::vector<int> & v)
 {
     if (v.empty()) return;
 
 
+    make_heap(v);
+
+
     int n = v.size();
-    for (int i = n - 1; i >= 0; --i)
-        siftDown(v, i, n);
-
-
     for (int i = n - 1; i >= 0; --i)
     {
         std::swap(v.front(), v[i]);
