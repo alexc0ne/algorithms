@@ -27,8 +27,8 @@ public:
     bool operator == (const BigInt &) const;        // operator ==
     bool operator < (const BigInt &) const;         // operator <
 
-    const BigInt & operator += (BigInt &);    // operator +=
-    BigInt operator + (BigInt &);             // operator +
+    const BigInt & operator += (const BigInt &);    // operator +=
+    BigInt operator + (const BigInt &);             // operator +
 
 private:
 
@@ -36,10 +36,10 @@ private:
     std::vector<int16_t> v_;                        // stores single digits, last digit in v_[0]
 
     void trimZeros();                               // {3,0,1,0,0,0} --> {3,0,1}, but {0,...,0} --> {0}
-    bool abs_less_comparison(const BigInt &other) const;      // returns abs(this) < abs(other))
-    void add(BigInt &);                             // add two numbers with the same sign, e.g. -6 and -11
-    void complement(BigInt &);                      // -(189,89), complement of 89 is 911, then +(189,911) = 1|100
-    void swap(BigInt &);                            // swaps this and other
+    bool abs_this_less_abs(const BigInt &other) const;      // returns abs(this) < abs(other))
+    void add(const BigInt &);                       // add two numbers with the same sign, e.g. -6 and -11, or 0 and 7
+    void subtract(const BigInt &);                  // subtract numbers with different signs,
+                                                    // but with the property: abs(this) > abs(other)
 };
 
 

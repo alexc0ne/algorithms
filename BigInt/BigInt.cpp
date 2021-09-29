@@ -114,15 +114,16 @@ bool BigInt::operator == (const BigInt & other) const
 
 //===================  operator + and auxiliary methods  ===================================
 
-void BigInt::add(BigInt & other)
+void BigInt::add(const BigInt & other)
 {
     if (other.size() > size())
         v_.resize(other.size(), 0);
 
-    auto it1 = v_.begin();
-    for (auto it2 = other.v_.begin(); it2 != other.v_.end(); ++it2, ++it1)
+    auto this_begin = v_.begin();
+    auto other_begin = other.v_.begin();
+    for ( ; other_begin != other.v_.end(); ++other_begin, ++this_begin)
     {
-        *it1 += *it2;
+        *this_begin += *other_begin;
     }
 
     int16_t carry = 0;
@@ -135,24 +136,31 @@ void BigInt::add(BigInt & other)
     if (carry != 0) v_.push_back(carry);
 }
 
-void BigInt::swap(BigInt & other)
+void BigInt::subtract(const BigInt & other)
 {
-    std::swap(sign_, other.sign_);
-    std::swap(v_, other.v_);
+    auto this_begin = v_.begin();
+    auto other_begin = other.v_.begin();
+    for ( ; other_begin != other.v_.end(); ++other_begin, ++this_begin)
+    {
+        *this_begin -= *other_begin;
+    }
+
+    if (size() > 1)
+    {
+        for (size_t i = 0; i + 1 < size(); ++i)
+        {
+            if (v_[i] < 0)
+            {
+                v_[i] += 10;
+                v_[i + 1] -= 1;
+            }
+        }
+
+        trimZeros();
+    }
 }
 
-void BigInt::complement(BigInt & other)
-{
-    other.v_.resize(v_.size(), 0);
-
-    for (auto & item : other.v_)
-        item = 9 - item;
-
-    BigInt one {1};
-    other.add(one);
-}
-
-const BigInt & BigInt::operator += (BigInt & other)
+const BigInt & BigInt::operator += (const BigInt & other)
 {
     if (sign_ == other.sign_)
     {
@@ -161,18 +169,19 @@ const BigInt & BigInt::operator += (BigInt & other)
     }
 
     // sign_ != other.sign_
-    if (abs_less_comparison(other)) swap(other);
-
-    complement(other);
-    add(other);
-    v_.back() = 0;
-    trimZeros();
+    if (!abs_this_less_abs(other)) subtract(other);
+    else
+    {
+        BigInt tmp {*this};
+        *this = other;
+        subtract(tmp);
+    }
 
     return *this;
 }
 //========================================================================================
 
-BigInt BigInt::operator + (BigInt & other)
+BigInt BigInt::operator + (const BigInt & other)
 {
     BigInt res(*this);
 
@@ -186,11 +195,11 @@ bool BigInt::operator < (const BigInt & other) const
 {
     if (sign_ == Sign::NEGATIVE and other.sign_ == Sign::NON_NEGATIVE) return true;
     if (sign_ == Sign::NON_NEGATIVE and other.sign_ == Sign::NEGATIVE) return false;
-    if (sign_ == Sign::NON_NEGATIVE and other.sign_ == Sign::NON_NEGATIVE) return abs_less_comparison(other);
-    if (sign_ == Sign::NEGATIVE and other.sign_ == Sign::NEGATIVE) return !abs_less_comparison(other);
+    if (sign_ == Sign::NON_NEGATIVE and other.sign_ == Sign::NON_NEGATIVE) return abs_this_less_abs(other);
+    if (sign_ == Sign::NEGATIVE and other.sign_ == Sign::NEGATIVE) return !abs_this_less_abs(other);
 }
 
-bool BigInt::abs_less_comparison(const BigInt & other) const
+bool BigInt::abs_this_less_abs(const BigInt & other) const
 {
     if (size() == other.size())
     {
