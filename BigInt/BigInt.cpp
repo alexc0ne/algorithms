@@ -5,14 +5,24 @@
 #include <sstream>
 
 
-void BigInt::updateIfNull()
+void BigInt::trimZeros()
 {
-    for (const auto & item : v_)
-        if (item != 0)
-            return;
+    auto it = v_.rbegin();
+    for ( ; it != v_.rend(); ++it)
+    {
+        if (*it != 0)
+            break;
+    }
 
-    sign_ = Sign::NON_NEGATIVE;
-    v_ = {0};
+    size_t diff = v_.rend() - it;
+
+    if (diff != 0)
+        v_.resize(diff);
+    else
+    {
+        sign_ = Sign::NON_NEGATIVE;
+        v_ = {0};
+    }
 }
 
 
@@ -57,6 +67,18 @@ BigInt::BigInt(int64_t i)
 }
 
 
+BigInt & BigInt::operator = (const BigInt & other)
+{
+    if (this != &other)
+    {
+        sign_ = other.sign_;
+        v_ = other.v_;
+    }
+
+    return *this;
+}
+
+
 std::string BigInt::toString() const
 {
     std::stringstream ss;
@@ -75,7 +97,7 @@ size_t BigInt::size() const
 }
 
 
-bool BigInt::operator == (const BigInt & other)
+bool BigInt::operator == (const BigInt & other) const
 {
     if (this->sign_ == other.sign_)
         if (this->size() == other.size())
@@ -90,25 +112,102 @@ bool BigInt::operator == (const BigInt & other)
     return false;
 }
 
+//===================  operator + and auxiliary methods  ===================================
 
-const BigInt & BigInt::operator += (const BigInt &)
+void BigInt::add(BigInt & other)
 {
-    // todo
-    return *this;
+    if (other.size() > size())
+        v_.resize(other.size(), 0);
+
+    auto it1 = v_.begin();
+    for (auto it2 = other.v_.begin(); it2 != other.v_.end(); ++it2, ++it1)
+    {
+        *it1 += *it2;
+    }
+
+    int16_t carry = 0;
+    for (auto & i : v_)
+    {
+        i += carry;
+        carry = i / 10;
+        i %= 10;
+    }
+    if (carry != 0) v_.push_back(carry);
 }
 
-BigInt BigInt::operator + (const BigInt & other)
+void BigInt::swap(BigInt & other)
+{
+    std::swap(sign_, other.sign_);
+    std::swap(v_, other.v_);
+}
+
+void BigInt::complement(BigInt & other)
+{
+    other.v_.resize(v_.size(), 0);
+
+    for (auto & item : other.v_)
+        item = 9 - item;
+
+    BigInt one {1};
+    other.add(one);
+}
+
+const BigInt & BigInt::operator += (BigInt & other)
+{
+    if (sign_ == other.sign_)
+    {
+        add(other);
+        return *this;
+    }
+
+    // sign_ != other.sign_
+    if (abs_less_comparison(other)) swap(other);
+
+    complement(other);
+    add(other);
+    v_.back() = 0;
+    trimZeros();
+
+    return *this;
+}
+//========================================================================================
+
+BigInt BigInt::operator + (BigInt & other)
 {
     BigInt res(*this);
 
     res += other;
-    res.updateIfNull();
+    res.trimZeros();
 
     return res;
 }
 
-std::ostream & operator << (std::ostream & out, const BigInt & bi)
+bool BigInt::operator < (const BigInt & other) const
 {
-    out << bi.toString();
+    if (sign_ == Sign::NEGATIVE and other.sign_ == Sign::NON_NEGATIVE) return true;
+    if (sign_ == Sign::NON_NEGATIVE and other.sign_ == Sign::NEGATIVE) return false;
+    if (sign_ == Sign::NON_NEGATIVE and other.sign_ == Sign::NON_NEGATIVE) return abs_less_comparison(other);
+    if (sign_ == Sign::NEGATIVE and other.sign_ == Sign::NEGATIVE) return !abs_less_comparison(other);
+}
+
+bool BigInt::abs_less_comparison(const BigInt & other) const
+{
+    if (size() == other.size())
+    {
+        auto it_this = v_.rbegin();
+        auto it_other = other.v_.rbegin();
+        for ( ; it_this != v_.rend(); ++it_this, ++it_other)
+        {
+            if (*it_this < *it_other) return true;
+            if (*it_this > *it_other) return false;
+        }
+        return false;
+    }
+    return size() < other.size();
+}
+
+std::ostream & operator << (std::ostream & out, const BigInt & n)
+{
+    out << n.toString();
     return out;
 }
