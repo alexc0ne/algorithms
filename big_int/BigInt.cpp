@@ -27,7 +27,7 @@ void BigInt::trimZeros()
 
 
 BigInt::BigInt() : sign_(Sign::NON_NEGATIVE), v_({0}) {}
-BigInt::BigInt(const BigInt & other) : sign_(other.sign_), v_(other.v_) {}
+BigInt::BigInt(const BigInt & other) = default;
 
 
 BigInt::BigInt(const std::string & s)
@@ -112,6 +112,10 @@ bool BigInt::operator == (const BigInt & other) const
     return false;
 }
 
+bool BigInt::operator != (const BigInt & other) const
+{
+    return !(*this == other);
+}
 //===================  operator + and auxiliary methods  ===================================
 
 void BigInt::add(const BigInt & other)
@@ -179,7 +183,6 @@ const BigInt & BigInt::operator += (const BigInt & other)
 
     return *this;
 }
-//========================================================================================
 
 BigInt BigInt::operator + (const BigInt & other)
 {
@@ -190,6 +193,140 @@ BigInt BigInt::operator + (const BigInt & other)
 
     return res;
 }
+
+//===================  operator - and auxiliary methods  ===================================
+
+const BigInt & BigInt::operator -= (const BigInt & other)
+{
+    if (sign_ != other.sign_)
+    {
+        add(other);
+        return *this;
+    }
+
+    // sign_ == other.sign_
+    if (!abs_this_less_abs(other)) subtract(other);
+    else
+    {
+        BigInt tmp {*this};
+        *this = other;
+        subtract(tmp);
+        sign_ = revert(sign_);
+    }
+
+    return *this;
+}
+
+BigInt BigInt::operator - (const BigInt & other)
+{
+    BigInt res(*this);
+
+    res -= other;
+    res.trimZeros();
+
+    return res;
+}
+
+//===== operator * and auxiliary methods  ========================================================
+
+BigInt BigInt::mul(size_t n) const
+{
+    BigInt res;
+
+    std::vector<int16_t> zeros(n, 0);
+    zeros.insert(zeros.end(), v_.begin(), v_.end());
+
+    res.v_ = zeros;
+    return res;
+}
+
+BigInt BigInt::div(size_t n) const
+{
+    if (n >= size())
+        return {0};
+
+    BigInt res;
+    res.v_ = {v_.begin() + n, v_.end()};
+
+    return res;
+}
+
+BigInt BigInt::mod(size_t n) const
+{
+    if (n > size()) n = size();
+
+    BigInt res;
+    res.v_ = {v_.begin(), v_.begin() + n};
+
+    return res;
+}
+
+BigInt karatsuba(const BigInt & left, const BigInt & right)
+{
+    if (left < 129 and right < 129)
+        return {
+                std::stoi(left.toString()) *
+                std::stoi(right.toString())
+    };
+
+    // n = max(len(left), len(right))
+    // x = 10^(n/2) * a + b
+    // a = x / 10^(n/2)
+    // b = x % 10^(n/2)
+
+    // left * right = 10^n * (a1 * a2) + 10^(n/2) * (a1 * b2 + a2 * b2) + b1 * b2
+    // left * right = 10^n * p + 10^(n/2) * (r - p - q) + q
+
+    // p = a1 * a2
+    // r = (a1 + b1) * (a2 + b2)
+    // q = b1 * b2
+
+    size_t n = std::max(left.size(), right.size());
+    n = (n + 2 - 1) / 2;
+    n *= 2;
+    size_t n_halved = n/2;
+
+    BigInt a1 = left.div(n_halved);
+    BigInt b1 = left.mod(n_halved);
+
+    BigInt a2 = right.div(n_halved);
+    BigInt b2 = right.mod(n_halved);
+
+    BigInt p = karatsuba(a1, a2);
+    BigInt r = karatsuba(a1 + b1, a2 + b2);
+    BigInt q = karatsuba(b1, b2);
+
+    return p.mul(n) + (r - p - q).mul(n_halved) + q;
+}
+
+
+const BigInt & BigInt::operator *= (const BigInt & other)
+{
+    if (*this == 0 or other == 0)
+    {
+        *this = 0;
+        return *this;
+    }
+
+    Sign sign = (sign_ == other.sign_) ? Sign::NON_NEGATIVE : Sign::NEGATIVE;
+
+    *this = karatsuba(this->abs(), other.abs());
+
+    sign_ = sign;
+
+    return *this;
+}
+
+BigInt BigInt::operator * (const BigInt & other)
+{
+    BigInt res(*this);
+
+    res *= other;
+    res.trimZeros();
+
+    return res;
+}
+//================================================================================================
 
 bool BigInt::operator < (const BigInt & other) const
 {
@@ -215,8 +352,22 @@ bool BigInt::abs_this_less_abs(const BigInt & other) const
     return size() < other.size();
 }
 
+BigInt BigInt::abs() const
+{
+    BigInt res(*this);
+    if (res.sign_ == Sign::NEGATIVE) res.sign_ = Sign::NON_NEGATIVE;
+
+    return res;
+}
+
 std::ostream & operator << (std::ostream & out, const BigInt & n)
 {
     out << n.toString();
     return out;
+}
+
+Sign revert(Sign sign)
+{
+    if (sign == Sign::NON_NEGATIVE) return Sign::NEGATIVE;
+    return Sign::NON_NEGATIVE;
 }
