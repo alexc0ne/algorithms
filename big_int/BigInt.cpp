@@ -282,8 +282,7 @@ BigInt karatsuba(const BigInt & left, const BigInt & right)
     // q = b1 * b2
 
     size_t n = std::max(left.size(), right.size());
-    n = (n + 2 - 1) / 2;
-    n *= 2;
+    if (n % 2 == 1) ++n;
     size_t n_halved = n/2;
 
     BigInt a1 = left.div(n_halved);
