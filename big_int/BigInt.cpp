@@ -5,6 +5,13 @@
 #include <sstream>
 
 
+
+Sign revert(Sign sign)
+{
+    if (sign == Sign::NON_NEGATIVE) return Sign::NEGATIVE;
+    return Sign::NON_NEGATIVE;
+}
+
 void BigInt::trimZeros()
 {
     auto it = v_.rbegin();
@@ -365,8 +372,11 @@ std::ostream & operator << (std::ostream & out, const BigInt & n)
     return out;
 }
 
-Sign revert(Sign sign)
+std::istream & operator>>(std::istream & is, BigInt & n)
 {
-    if (sign == Sign::NON_NEGATIVE) return Sign::NEGATIVE;
-    return Sign::NON_NEGATIVE;
+    std::string s;
+    is >> s;
+
+    n = BigInt(s);
+    return is;
 }

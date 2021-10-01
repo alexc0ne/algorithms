@@ -56,5 +56,6 @@ private:
 
 // ======== auxiliary functions =============================================================================
 std::ostream & operator << (std::ostream &, const BigInt &);    // operator <<
+std::istream & operator >> (std::istream &, BigInt &);    // operator >>
 BigInt karatsuba(const BigInt &, const BigInt &);
 
