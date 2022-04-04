@@ -58,6 +58,14 @@ int List::size() const
 void List::pop_back()
 {
     if (!size_) return;
+    
+    if (size_ == 1) {
+        delete head_;
+        head_ = nullptr;
+        tail_ = nullptr;
+        --size_;
+        return;
+    }
 
     Node * tmp = tail_;
     tail_ = tail_->prev_;
@@ -73,6 +81,14 @@ void List::pop_back()
 void List::pop_front()
 {
     if (!size_) return;
+    
+    if (size_ == 1) {
+        delete head_;
+        head_ = nullptr;
+        tail_ = nullptr;
+        --size_;
+        return;
+    }
 
     Node * tmp = head_;
     head_ = head_->next_;
